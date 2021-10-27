@@ -34,14 +34,13 @@ int main () {
 	double x_start = 0;
 	double x_end = 1;
 	int N = 100;
-	double delta_x = (x_end-x_start) / N;
-  	//double delta = (end - start) / (num - 1);
+	double delta_x = (x_end-x_start) / (N-1);
 
 
 	double t_start = 0;
 	double t_end = 10;
 	int n = 100;
-	double delta_t = (t_end-t_start) / n;
+	double delta_t = (t_end-t_start) / (n-1);
 
 	double u = 0.1;
 
