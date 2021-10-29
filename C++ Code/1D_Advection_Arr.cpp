@@ -109,7 +109,7 @@ int main () {
   		a_read[i] = a_write[i];
   		a_write[i] = temp[i];
   	}
-  	
+  	print_array
   	output_array(a_write,N,j);
   }
 
