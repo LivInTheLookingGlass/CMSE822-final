@@ -1,9 +1,9 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 2D Viscous Burgers Equation (Parallel)
-// da/dt + a*(da/dx) + a*(da/dy) = nu ((d^2a/dx^2) + (d^2a/dy^2))
+// 2D Advection Equation
+// da/dt + u*(da/dx) + v*(da/dy) = 0
 // Carolyn Wendeln
-// 12/04/2021
+// 10/24/2021
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <iostream>
@@ -37,7 +37,7 @@ void print_array(double** arr, int N, double* x_dist, double* y_dist)
 void output_array(double** arr, int N, int n, double* x_dist, double* y_dist)
 {
     ofstream file;
-    string file_name = "2D_Viscous_Burgers_Time_Step_" + to_string(n) + ".csv";
+    string file_name = "2D_Advection_Time_Step_" + to_string(n) + ".csv";
     file.open (file_name);
     file << "x dist" << " ," << "y dist" << " ,"<< "func value" << endl;
     if (file.is_open())
@@ -66,14 +66,14 @@ int main (int argc, char* argv[]) {
   	
   	else
   	{
-  	    
-  		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//Input Data
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 		double dist_start = 0;
 		double dist_end = 1;
-		int N = atoi(argv[1]);
+		int N = N = atoi(argv[1]);
 		double delta_dist = (dist_end-dist_start) / (N-1);
 
 		double t_start = 0;
@@ -81,20 +81,16 @@ int main (int argc, char* argv[]) {
 		int n = atof(argv[2]);
 		double delta_t = (t_end-t_start) / (n-1);
 
-		double nu = delta_dist;
-				
-	    int thrd_cnt = atof(argv[3]);
-	    
-	    int chunk_size = 10;
+		double u = 0.1;
 
-// 		cout << "delta x: "<< delta_dist << endl; 	
-// 		cout << "delta t: " << delta_t << endl; 
-	    
+		int thrd_cnt = atof(argv[3]);
+
 
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//Generate Arrays
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		  
+
 		double* x_dist = new double[N];
 		double* y_dist = new double[N];
 
@@ -148,43 +144,40 @@ int main (int argc, char* argv[]) {
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 		  	//i = 0  ; j = 0
-		  	a_write[0][0] = a_read[0][0]
-		  	+ ( ((nu * delta_t) / pow(delta_dist,2)) * (a_read[1][0] - (2 * a_read[0][0]) + a_read[N-1][0]) )
-		  	+ ( ((nu * delta_t) / pow(delta_dist,2)) * (a_read[0][1] - (2 * a_read[0][0]) + a_read[0][N-1]) )
-		  	- ( ((a_read[0][0] * delta_t)/(2 * delta_dist)) * (a_read[1][0] - a_read[N-1][0]) )
-		  	- ( ((a_read[0][0] * delta_t)/(2 * delta_dist)) * (a_read[0][1] - a_read[0][N-1]) )
-		  	;
+		  	a_write[0][0] = a_read[0][0] - ((((u * delta_t) / (2 * delta_dist))) * (((a_read[1][0] - a_read[N-1][0])) + ((a_read[0][1] - a_read[0][N-1]))));
 
 			//i = 0  ; j = 99
-		  	a_write[0][N-1] = a_read[0][N-1]
-		  	+ ( ((nu * delta_t) / pow(delta_dist,2)) * (a_read[1][N-1] - (2 * a_read[0][N-1]) + a_read[N-1][N-1]) )
-		  	+ ( ((nu * delta_t) / pow(delta_dist,2)) * (a_read[0][0] - (2 * a_read[0][N-1]) + a_read[0][N-2]) )
-		  	- ( ((a_read[0][N-1] * delta_t)/(2 * delta_dist)) * (a_read[1][N-1] - a_read[N-1][N-1]) )
-		  	- ( ((a_read[0][N-1] * delta_t)/(2 * delta_dist)) * (a_read[0][0] - a_read[0][N-2]) )
-		  	;
+		  	a_write[0][N-1] = a_read[0][N-1] - ((((u * delta_t) / (2 * delta_dist))) * (((a_read[1][N-1] - a_read[N-1][N-1])) + ((a_read[0][0] - a_read[0][N-2]))));
 
 			//i = 99 ; j = 0
-		  	a_write[N-1][0] = a_read[N-1][0]
-		  	+ ( ((nu * delta_t) / pow(delta_dist,2)) * (a_read[0][0] - (2 * a_read[N-1][0]) + a_read[N-2][0]) )
-		  	+ ( ((nu * delta_t) / pow(delta_dist,2)) * (a_read[N-1][1] - (2 * a_read[N-1][0]) + a_read[N-1][N-1]) )
-		  	- ( ((a_read[N-1][0] * delta_t)/(2 * delta_dist)) * (a_read[0][0] - a_read[N-2][0]) )
-		  	- ( ((a_read[N-1][0] * delta_t)/(2 * delta_dist)) * (a_read[N-1][1] - a_read[N-1][N-1]) )
-		  	;
+			 a_write[N-1][0] = a_read[N-1][0] - ((((u * delta_t) / (2 * delta_dist))) * (((a_read[0][0] - a_read[N-2][0])) + ((a_read[N-1][1] - a_read[N-1][N-1]))));
 
 			//i = 99 ; j = 99
-		  	a_write[N-1][N-1] = a_read[N-1][N-1]
-		  	+ ( ((nu * delta_t) / pow(delta_dist,2)) * (a_read[0][N-1] - (2 * a_read[N-1][N-1]) + a_read[N-2][N-1]) )
-		  	+ ( ((nu * delta_t) / pow(delta_dist,2)) * (a_read[N-1][0] - (2 * a_read[N-1][N-1]) + a_read[N-1][N-2]) )
-		  	- ( ((a_read[N-1][N-1] * delta_t)/(2 * delta_dist)) * (a_read[0][N-1] - a_read[N-2][N-1]) )
-		  	- ( ((a_read[N-1][N-1] * delta_t)/(2 * delta_dist)) * (a_read[N-1][0] - a_read[N-1][N-2]) )
-		  	;
+		  	a_write[N-1][N-1] = a_read[N-1][N-1] - ((((u * delta_t) / (2 * delta_dist))) * (((a_read[0][N-1] - a_read[N-2][N-1])) + ((a_read[N-1][0] - a_read[N-1][N-2]))));
 			
+
+			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			//first few cases
+			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		 	 //loop along first row
+		 	for(int j=1; j<(N-2); ++j)
+		 	{
+		  		a_write[0][j] = a_read[0][j] - ((((u * delta_t) / (2 * delta_dist))) * (((a_read[1][j] - a_read[N-1][j])) + ((a_read[0][j+1] - a_read[0][j-1]))));
+		 	}
+
+		 	//loop along first column
+			for(int i=1; i<(N-2); ++i)
+			{
+		  		a_write[i][0] = a_read[i][0] - ((((u * delta_t) / (2 * delta_dist))) * (((a_read[i+1][0] - a_read[i-1][0])) + ((a_read[i][1] - a_read[i][N-1]))));
+			}
+
 
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			//bulk
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	        
-	        double start = omp_get_wtime();
+
+			double start = omp_get_wtime();
 	        
 	        #pragma omp parallel for num_threads(thrd_cnt)
 	       // #pragma omp parallel for schedule(static) num_threads(thrd_cnt)
@@ -195,68 +188,31 @@ int main (int argc, char* argv[]) {
 		  	{
 		  		for(int j=1; j<(N-2); ++j)
 		  		{
-		  			a_write[i][j] = a_read[i][j]
-		  			+ ( ((nu * delta_t) / pow(delta_dist,2)) * (a_read[i+1][j] - (2 * a_read[i][j]) + a_read[i-1][j]) )
-		  			+ ( ((nu * delta_t) / pow(delta_dist,2)) * (a_read[i][j+1] - (2 * a_read[i][j]) + a_read[i][j-1]) )
-		  			- ( ((a_read[i][j] * delta_t)/(2 * delta_dist)) * (a_read[i+1][j] - a_read[i-1][j]) )
-		  			- ( ((a_read[i][j] * delta_t)/(2 * delta_dist)) * (a_read[i][j+1] - a_read[i][j-1]) )
-		  			;
+		  			a_write[i][j] = a_read[i][j] - ((((u * delta_t) / (2 * delta_dist))) * (((a_read[i+1][j] - a_read[i-1][j])) + ((a_read[i][j+1] - a_read[i][j-1]))));
 		  		}
 		  	}
-		  	
+
 	        double end = omp_get_wtime();
 	        double time_taken = end-start;
 	       // cout << "Time taken is " << time_taken << " for time step " << t << endl;
 
 	        loop_time[t] = time_taken;
-	        
+	    
 
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			//first & last row 
+			//last few cases
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+			//loop along last row
 		 	for(int j=1; j<(N-2); ++j)
 		 	{
-		  		//loop along first row
-		  		a_write[0][j] = a_read[0][j]
-		  		+ ( ((nu * delta_t) / pow(delta_dist,2)) * (a_read[1][j] - (2 * a_read[0][j]) + a_read[N-1][j]) )
-		  		+ ( ((nu * delta_t) / pow(delta_dist,2)) * (a_read[0][j+1] - (2 * a_read[0][j]) + a_read[0][j-1]) )
-		  		- ( ((a_read[0][j] * delta_t)/(2 * delta_dist)) * (a_read[1][j] - a_read[N-1][j]) )
-		  		- ( ((a_read[0][j] * delta_t)/(2 * delta_dist)) * (a_read[0][j+1] - a_read[0][j-1]) )
-		  		;
-
-		 	
-		 		//loop along last row
-		  		a_write[N-1][j] = a_read[N-1][j]
-		  		+ ( ((nu * delta_t) / pow(delta_dist,2)) * (a_read[0][j] - (2 * a_read[N-1][j]) + a_read[N-2][j]) )
-		  		+ ( ((nu * delta_t) / pow(delta_dist,2)) * (a_read[N-1][j+1] - (2 * a_read[N-1][j]) + a_read[N-1][j-1]) )
-		  		- ( ((a_read[N-1][j] * delta_t)/(2 * delta_dist)) * (a_read[0][j] - a_read[N-2][j]) )
-		  		- ( ((a_read[N-1][j] * delta_t)/(2 * delta_dist)) * (a_read[N-1][j+1] - a_read[N-1][j-1]) )
-		  		;
+		  		a_write[N-1][j] = a_read[N-1][j] - ((((u * delta_t) / (2 * delta_dist))) * (((a_read[0][j] - a_read[N-2][j])) + ((a_read[N-1][j+1] - a_read[N-1][j-1]))));
 		 	}
 
-
-			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			//first & last column  
-			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+		 	//loop along last column
 			for(int i=1; i<(N-2); ++i)
 			{
-				//loop along first column 
-				a_write[i][0] = a_read[i][0]
-		  		+ ( ((nu * delta_t) / pow(delta_dist,2)) * (a_read[i+1][0] - (2 * a_read[i][0]) + a_read[i-1][0]) )
-		  		+ ( ((nu * delta_t) / pow(delta_dist,2)) * (a_read[i][1] - (2 * a_read[i][0]) + a_read[i][N-1]) )
-		  		- ( ((a_read[i][0] * delta_t)/(2 * delta_dist)) * (a_read[i+1][0] - a_read[i-1][0]) )
-		  		- ( ((a_read[i][0] * delta_t)/(2 * delta_dist)) * (a_read[i][1] - a_read[i][N-1]) )
-		  		;
-			
-		 		//loop along last column 
-		  		a_write[i][N-1] = a_read[i][N-1]
-		  		+ ( ((nu * delta_t) / pow(delta_dist,2)) * (a_read[i+1][N-1] - (2 * a_read[i][N-1]) + a_read[i-1][N-1]) )
-		  		+ ( ((nu * delta_t) / pow(delta_dist,2)) * (a_read[i][0] - (2 * a_read[i][N-1]) + a_read[i][N-2]) )
-		  		- ( ((a_read[i][N-1] * delta_t)/(2 * delta_dist)) * (a_read[i+1][N-1] - a_read[i-1][N-1]) )
-		  		- ( ((a_read[i][N-1] * delta_t)/(2 * delta_dist)) * (a_read[i][0] - a_read[i][N-2]) )
-		  		;
+		  		a_write[i][N-1] = a_read[i][N-1] - ((((u * delta_t) / (2 * delta_dist))) * (((a_read[i+1][N-1] - a_read[i-1][N-1])) + ((a_read[i][0] - a_read[i][N-2]))));
 			}
 
 
@@ -268,11 +224,11 @@ int main (int argc, char* argv[]) {
 	        a_read = a_write;
 	        a_write = temp;
 
-	// 		output_array(a_write, N, t, x_dist, y_dist);
-	    
+			// output_array(a_write, N, t, x_dist, y_dist);
+
 
 		}
-		
+
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//Time to Run Main For Loop
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -287,8 +243,7 @@ int main (int argc, char* argv[]) {
 	   // cout << "Total Time: " << sum << endl;
 	    cout << sum << endl;
 
-
-		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//We're Done, Release the Memory 
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -306,12 +261,8 @@ int main (int argc, char* argv[]) {
 
 		delete [] loop_time;
 
-
 	}
 
 }
-
-	
-
 
 
