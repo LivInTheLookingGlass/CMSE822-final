@@ -6,11 +6,8 @@
 \usepackage{lipsum}
 \usepackage{listings}
 \usepackage{xcolor}
-\lstset { %
-    language=C++,
-    backgroundcolor=\color{black!5}, % set backgroundcolor
-    basicstyle=\footnotesize,% basic font setting
-}
+
+\include{GabesMacros.tex}
 
 \title{CMSE 822 Final Project }
 \author{Carolyn Wendeln $\&$ Gabe Appleton}
@@ -51,7 +48,7 @@ K-Athena will become a key component to my own thesis, so this research project 
 
 \section{Methodology}
 
-For this research project, we look to solve and parallalize three PDEs. The first is the linear advection equation, which can be described as 
+For this research project, we look to solve and parallelize three PDEs. The first is the linear advection equation, which can be described as 
 
 \begin{equation}
  \frac{\partial a}{\partial t} + u \frac{\partial a}{\partial x} = 0
@@ -76,13 +73,13 @@ To solve this PDE, we use a finite-difference discretization in which the domain
 \label{Finite_Difference_Grid}
 \end{figure}
 
-Let the index $i$ denote the point's location, and $a_i$ denote the discrete value of $a(x)$ at point $i$. Figure ~\ref{Finite_Difference_Grid} shows the grid. To discretize in time, we denote the time-level with a superscrip $n$, such that $a_i^n = a(x_i, t_n)$. For a fixed $\Delta t$, a time level $n$ corresponds to a time of $t = n \Delta t$. A simple first-order accurate centered-difference discretization is then
+Let the index $i$ denote the point's location, and $a_i$ denote the discrete value of $a(x)$ at point $i$. Figure ~\ref{Finite_Difference_Grid} shows the grid. To discretize in time, we denote the time-level with a superscript $n$, such that $a_i^n = a(x_i, t_n)$. For a fixed $\Delta t$, a time level $n$ corresponds to a time of $t = n \Delta t$. A simple first-order accurate centered-difference discretization is then
 
 \begin{equation}
  \frac{a_i^{n+1} - a_i^n}{\Delta t} + u \frac{a_{i+1}^n - a_{i-1}^n}{2 \Delta x}  = 0
 \end{equation}
 
-This is a forward-time, centered-space explicit method, since the new solution, $a_i^{n+1}$, depends only on information at the old time level, $n$. When implimented into \texttt{C++}, we are itterating through time steps $n$ and displacment steps $i$ to solve for $a_i^{n+1} $
+This is a forward-time, centered-space explicit method, since the new solution, $a_i^{n+1}$, depends only on information at the old time level, $n$. When implemented into \texttt{C++}, we are iterating through time steps $n$ and displacement steps $i$ to solve for $a_i^{n+1} $
 
 The second equation we wish to investigate is Inviscid Burgers’ equation. This equation is a nonlinear hyperbolic equation, and given as:
 
@@ -108,9 +105,9 @@ Here $\nu$ is the viscosity. The centered-difference discretization for Viscous 
  \frac{a_i^{n+1} - a_i^n}{\Delta t} + a_i^n ( \frac{a_{i+1}^n - a_{i-1}^n}{2 \Delta x} ) = \nu (\frac{a_{i+1}^n - 2a_i^n - a_{i-1}^n}{{\Delta x}^2})
 \end{equation}
 
-For this research project we aim to parallize and time the speed for our code to run through the bulk of our data (excluding the special boundary conditions to main periodicy). For example, the 1D Advection would appear as:
+For this research project we aim to parallelize and time the speed for our code to run through the bulk of our data (excluding the special boundary conditions to main periodicy). For example, the 1D Advection would appear as:
 
-\begin{lstlisting}
+\begin{c++}
 double start = omp_get_wtime();
 
 #pragma omp parallel for num_threads(thrd_cnt)
@@ -129,30 +126,50 @@ for(int t=0; t<n; ++t)
 	
 	loop_time[t] = time_taken;
 }	
-\end{lstlisting}
+\end{c++}
 
 
 
+\begin{table}[h]
 \begin{center}
 \begin{tabular}{ |c|c|c|c|c|c| } 
 \hline
- & Scaling & Schedule & N & n & t \\
+ & Scaling & Schedule & N & n & threads \\
 \hline
-\multirow{8}{4em}{2D Advection} & \multirow{4}{4em}{strong}& none & 32 - 2,048 & 10,00 & 1 - 8 \\ 
-& & static & 32 - 2,048 & 10,00 & 1 - 8 \\
-& & dynamic & 32 - 2,048 & 10,00 & 1 - 8 \\ 
-&  & guided & 32 - 2,048 & 10,00 & 1 - 8 \\ 
-\cline{2-2} % add this
-
-& \multirow{4}{4em}{weak}& cell3 & cell 4 & cell 5 & cell 6 \\ 
-& & cell6 & cell 7 & cell 8 & cell 9\\ 
-& & cell6 & cell 7 & cell 8 & cell 9\\ 
-&  & cell9 & cell 10 & cell 11& cell10 \\ 
+\multirow{8}{4em}{2D Advection} & \multirow{4}{4em}{strong}& none & 32 - 2,048 & 10,000 & 1 - 8 \\ 
+& & static & 32 - 2,048 & 10,000 & 1 - 8 \\
+& & dynamic & 32 - 2,048 & 10,000 & 1 - 8 \\ 
+&  & guided & 32 - 2,048 & 10,000 & 1 - 8 \\ 
+& \multirow{4}{4em}{weak}& none & 32 - 2,048 & 1000N $\div$ 32 & 1 - 8 \\ 
+& & static & 32 - 2,048 & 1000N $\div$ 32 & 1 - 8 \\
+& & dynamic & 32 - 2,048 & 1000N $\div$ 32 & 1 - 8 \\ 
+&  & guided & 32 - 2,048 & 1000N $\div$ 32 & 1 - 8 \\ 
+\hline
+\multirow{8}{4em}{2D Burgers} & \multirow{4}{4em}{strong}& none & 32 - 2,048 & 10,000 & 1 - 8 \\ 
+& & static & 32 - 2,048 & 10,000 & 1 - 8 \\
+& & dynamic & 32 - 2,048 & 10,000 & 1 - 8 \\ 
+&  & guided & 32 - 2,048 & 10,000 & 1 - 8 \\ 
+& \multirow{4}{4em}{weak}& none & 32 - 2,048 & 1000N $\div$ 32 & 1 - 8 \\ 
+& & static & 32 - 2,048 & 1000N $\div$ 32 & 1 - 8 \\
+& & dynamic & 32 - 2,048 & 1000N $\div$ 32 & 1 - 8 \\ 
+&  & guided & 32 - 2,048 & 1000N $\div$ 32 & 1 - 8 \\ 
+\hline
+\multirow{8}{4em}{2D Viscous Burgers} & \multirow{4}{4em}{strong}& none & 32 - 2,048 & 10,000 & 1 - 8 \\ 
+& & static & 32 - 2,048 & 10,000 & 1 - 8 \\
+& & dynamic & 32 - 2,048 & 10,000 & 1 - 8 \\ 
+&  & guided & 32 - 2,048 & 10,000 & 1 - 8 \\ 
+& \multirow{4}{4em}{weak}& none & 32 - 2,048 & 1000N $\div$ 32 & 1 - 8 \\ 
+& & static & 32 - 2,048 & 1000N $\div$ 32 & 1 - 8 \\
+& & dynamic & 32 - 2,048 & 1000N $\div$ 32 & 1 - 8 \\ 
+&  & guided & 32 - 2,048 & 1000N $\div$ 32 & 1 - 8 \\ 
 \hline
 \end{tabular}
 \end{center}
+\caption{Summary of tasks to run. Note that N is only run for powers of 2.}
+\label{Table_Timing_Summary}
+\end{table}
 
-For 2D Advection, 2D Inviscid Burgers, and 2D Viscous Burgers we wish to look at strong and weak scaling, while incorportationg cache blocking by loop scheduling. A detailed summary can be found in Table 
+For 2D Advection, 2D Inviscid Burgers, and 2D Viscous Burgers we wish to look at strong and weak scaling, while incorporating cache blocking by loop scheduling. A detailed summary can be found in Table ~\ref{Table_Timing_Summary}
 
 
 
@@ -161,7 +178,7 @@ For 2D Advection, 2D Inviscid Burgers, and 2D Viscous Burgers we wish to look at
 \section{Conclusion}
 \section{Acknowledgments}
 
-C. W. would like to thank Dr. Andrew Christlieb for his invaluable knowlege on numerical solutions to PDEs.
+C. W. would like to thank Dr. Andrew Christlieb for his invaluable knowledge on numerical solutions to PDEs.
 
 
 
