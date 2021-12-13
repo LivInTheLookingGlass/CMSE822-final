@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2018.4.16)  13 DEC 2021 11:12
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2018.4.16)  13 DEC 2021 11:28
 entering extended mode
  \write18 enabled.
  %&-line parsing enabled.
@@ -52,28 +52,35 @@ File: pdftex.def 2018/01/08 v1.0l Graphics/color driver for pdftex
 \Gin@req@height=\dimen103
 \Gin@req@width=\dimen104
 )
+(/usr/local/texlive/2018/texmf-dist/tex/latex/multirow/multirow.sty
+Package: multirow 2016/11/25 v2.2 Span multiple rows of a table
+\multirow@colwidth=\skip43
+\multirow@cntb=\count88
+\multirow@dima=\skip44
+\bigstrutjot=\dimen105
+)
 (/usr/local/texlive/2018/texmf-dist/tex/latex/lipsum/lipsum.sty
 Package: lipsum 2014/07/27 v1.3 150 paragraphs of Lorem Ipsum dummy text
-\c@lips@count=\count88
+\c@lips@count=\count89
 )
 (/usr/local/texlive/2018/texmf-dist/tex/latex/listings/listings.sty
-\lst@mode=\count89
+\lst@mode=\count90
 \lst@gtempboxa=\box26
 \lst@token=\toks17
-\lst@length=\count90
-\lst@currlwidth=\dimen105
-\lst@column=\count91
-\lst@pos=\count92
-\lst@lostspace=\dimen106
-\lst@width=\dimen107
-\lst@newlines=\count93
-\lst@lineno=\count94
-\lst@maxwidth=\dimen108
+\lst@length=\count91
+\lst@currlwidth=\dimen106
+\lst@column=\count92
+\lst@pos=\count93
+\lst@lostspace=\dimen107
+\lst@width=\dimen108
+\lst@newlines=\count94
+\lst@lineno=\count95
+\lst@maxwidth=\dimen109
 
 (/usr/local/texlive/2018/texmf-dist/tex/latex/listings/lstmisc.sty
 File: lstmisc.sty 2015/06/04 1.6 (Carsten Heinz)
-\c@lstnumber=\count95
-\lst@skipnumbers=\count96
+\c@lstnumber=\count96
+\lst@skipnumbers=\count97
 \lst@framebox=\box27
 )
 (/usr/local/texlive/2018/texmf-dist/tex/latex/listings/listings.cfg
@@ -110,31 +117,31 @@ File: lstmisc.sty 2015/06/04 1.6 (Carsten Heinz)
 (./Final Report.aux)
 \openout1 = `"Final Report.aux"'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 19.
-LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 20.
+LaTeX Font Info:    ... okay on input line 20.
 
 (/usr/local/texlive/2018/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count97
-\scratchdimen=\dimen109
+\scratchcounter=\count98
+\scratchdimen=\dimen110
 \scratchbox=\box28
-\nofMPsegments=\count98
-\nofMParguments=\count99
+\nofMPsegments=\count99
+\nofMParguments=\count100
 \everyMPshowfont=\toks18
-\MPscratchCnt=\count100
-\MPscratchDim=\dimen110
-\MPnumerator=\count101
-\makeMPintoPDFobject=\count102
+\MPscratchCnt=\count101
+\MPscratchDim=\dimen111
+\MPnumerator=\count102
+\makeMPintoPDFobject=\count103
 \everyMPtoPDFconversion=\toks19
 ) (/usr/local/texlive/2018/texmf-dist/tex/latex/oberdiek/epstopdf-base.sty
 Package: epstopdf-base 2016/05/15 v2.6 Base part for package epstopdf
@@ -192,54 +199,58 @@ G,.JBIG2,.JB2,.eps]
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
-\c@lstlisting=\count103
+\c@lstlisting=\count104
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <12> on input line 21.
+(Font)              <12> on input line 22.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <8> on input line 21.
+(Font)              <8> on input line 22.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <6> on input line 21.
+(Font)              <6> on input line 22.
 
 [1
 
 {/usr/local/texlive/2018/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <7> on input line 55.
+(Font)              <7> on input line 56.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <5> on input line 55.
+(Font)              <5> on input line 56.
 <Finite_Difference_Grid.png, id=10, 926.46124pt x 254.9525pt>
 File: Finite_Difference_Grid.png Graphic file (type png)
 <use Finite_Difference_Grid.png>
-Package pdftex.def Info: Finite_Difference_Grid.png  used on input line 73.
+Package pdftex.def Info: Finite_Difference_Grid.png  used on input line 74.
 (pdftex.def)             Requested size: 345.0pt x 94.94171pt.
 
 [2 <./Finite_Difference_Grid.png>]
-LaTeX Font Info:    Try loading font information for OML+cmr on input line 117.
+LaTeX Font Info:    Try loading font information for OML+cmr on input line 118.
 
 
 (/usr/local/texlive/2018/texmf-dist/tex/latex/base/omlcmr.fd
 File: omlcmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OML/cmr/m/n' in size <8> not available
-(Font)              Font shape `OML/cmm/m/it' tried instead on input line 117.
-LaTeX Font Info:    Try loading font information for OMS+cmr on input line 118.
+(Font)              Font shape `OML/cmm/m/it' tried instead on input line 118.
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 119.
 
 
 (/usr/local/texlive/2018/texmf-dist/tex/latex/base/omscmr.fd
 File: omscmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <8> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 118.
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 119.
 
-(./Final Report.bbl [3]) [4] (./Final Report.aux) ) 
+Overfull \hbox (4.1667pt too wide) in paragraph at lines 141--141
+\OT1/cmr/m/n/10 Advection|  
+ []
+
+[3] (./Final Report.bbl) [4] (./Final Report.aux) ) 
 Here is how much of TeX's memory you used:
- 3938 strings out of 492649
- 53046 string characters out of 6129622
- 244644 words of memory out of 5000000
- 7785 multiletter control sequences out of 15000+600000
+ 3991 strings out of 492649
+ 53878 string characters out of 6129622
+ 248160 words of memory out of 5000000
+ 7834 multiletter control sequences out of 15000+600000
  8103 words of font info for 29 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 41i,7n,58p,481b,1374s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 41i,8n,58p,481b,1374s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/local/texlive/2018/tex
 mf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2018/texm
 f-dist/fonts/type1/public/amsfonts/cm/cmbx8.pfb></usr/local/texlive/2018/texmf-
@@ -257,7 +268,7 @@ ic/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public
 /amsfonts/cm/cmsy8.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/a
 msfonts/cm/cmti10.pfb></usr/local/texlive/2018/texmf-dist/fonts/type1/public/am
 sfonts/cm/cmtt10.pfb>
-Output written on "Final Report.pdf" (4 pages, 188328 bytes).
+Output written on "Final Report.pdf" (4 pages, 189540 bytes).
 PDF statistics:
  84 PDF objects out of 1000 (max. 8388607)
  59 compressed objects within 1 object stream
