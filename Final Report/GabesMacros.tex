@@ -1,0 +1,98 @@
+\usepackage{mathtools}
+\usepackage{xcolor}
+\usepackage{listings}
+
+\newcommand{\divider}{\par\noindent\rule{0.9375\textwidth}{0.4pt}}
+
+\newcommand{\DeclareAutoPairedDelimiter}[3]{%
+  \expandafter\DeclarePairedDelimiter\csname Auto\string#1\endcsname{#2}{#3}%
+  \begingroup\edef\x{\endgroup
+    \noexpand\DeclareRobustCommand{\noexpand#1}{%
+      \expandafter\noexpand\csname Auto\string#1\endcsname*}}%
+  \x}
+
+\DeclareAutoPairedDelimiter{\tuple}{\langle}{\rangle}
+\DeclareAutoPairedDelimiter{\array}{[}{]}
+\DeclareAutoPairedDelimiter{\ceil}{\lceil}{\rceil}
+\DeclareAutoPairedDelimiter{\floor}{\lfloor}{\rfloor}
+
+
+
+\newcommand{\answer}[1]{{\color{violet}%
+        #1
+    }%
+}
+
+\newcommand{\finalanswer}[1]{
+    \noindent\color{red}\fbox{%
+        \parbox{0.975\linewidth}{\color{violet}%
+            #1
+        }%
+    }
+}
+
+% Default fixed font does not support bold face
+\DeclareFixedFont{\ttb}{T1}{txtt}{bx}{n}{10} % for bold
+\DeclareFixedFont{\ttm}{T1}{txtt}{m}{n}{10}  % for normal
+
+% custom colors for lst
+\definecolor{deepblue}{rgb}{0,0,0.5}
+\definecolor{deepred}{rgb}{0.6,0,0}
+\definecolor{deepgreen}{rgb}{0,0.5,0}
+
+% Python style for highlighting
+\newcommand\pythonstyle{\lstset{
+language=Python,
+basicstyle=\ttm,
+morekeywords={self},              % Add keywords here
+keywordstyle=\ttb\color{deepblue},
+emph={MyClass,__init__},          % Custom highlighting
+emphstyle=\ttb\color{deepred},    % Custom highlighting style
+stringstyle=\color{deepgreen},
+frame=tb,                         % Any extra options here
+showstringspaces=false,
+}}
+
+% Python environment
+\lstnewenvironment{python}[1][]
+{
+\pythonstyle
+\lstset{#1}
+}
+{}
+
+\newcommand\cppstyle{\lstset{
+    language=C++, % choose the language of the code
+    basicstyle=\fontfamily{pcr}\selectfont\footnotesize\color{black},
+    keywordstyle=\color{black}\bfseries, % style for keywords
+    numbers=left, % where to put the line-numbers
+    numberstyle=\scriptsize, % the size of the fonts that are used for the 
+    showspaces=false, % show spaces adding particular underscores
+    showstringspaces=false, % underline spaces within strings
+    showtabs=false, % show tabs within strings adding particular underscores
+    frame=single, % adds a frame around the code
+    tabsize=2, % sets default tabsize to 2 spaces
+    rulesepcolor=\color{gray},
+    rulecolor=\color{black},
+    captionpos=b, % sets the caption-position to bottom
+    breaklines=true, % sets automatic line breaking
+    breakatwhitespace=false, 
+    numbersep=6pt,
+}}
+
+% C++ environment
+\lstnewenvironment{c++}[1][]
+{
+\cppstyle
+\lstset{#1}
+}
+{}
+
+\newcommand{\hb}{\ensuremath{\longrightarrow}\xspace}
+\newcommand{\chb}{\ensuremath{\|}}
+
+\newenvironment{warning}
+  {\par\begin{mdframed}[linewidth=2pt,linecolor=red,backgroundcolor=yellow,frametitle=Warning]%
+    \begin{list}{}{\leftmargin=1cm
+                  \labelwidth=\leftmargin}\item[\Large\ding{43}]}
+  {\end{list}\end{mdframed}\par}
