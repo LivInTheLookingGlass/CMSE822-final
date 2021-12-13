@@ -22,17 +22,17 @@ using namespace std;
 // Output Array Functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void print_array(double** arr, int N, double* x_dist, double* y_dist) 
-{ 
+void print_array(double** arr, int N, double* x_dist, double* y_dist)
+{
 	//cout << " x " << " y " << " a_write " << endl;
 	for (int i = 0; i < N; i++)
 	{
 		for (int j = 0; j < N; j++)
 		{
-			cout << x_dist[i] << " " << y_dist[j] << " " << arr[i][j] << endl; 
+			cout << x_dist[i] << " " << y_dist[j] << " " << arr[i][j] << endl;
 		}
 	}
-} 
+}
 
 void output_array(double** arr, int N, int n, double* x_dist, double* y_dist)
 {
@@ -60,10 +60,10 @@ void output_array(double** arr, int N, int n, double* x_dist, double* y_dist)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main (int argc, char* argv[]) {
-	
+
 	if (argc != 4)
     	cout << "Please give step size, time step, and thread count" << endl;
-  	
+
   	else
   	{
 
@@ -89,7 +89,7 @@ int main (int argc, char* argv[]) {
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//Generate Arrays
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		  
+
 
 		double* x_dist = new double[N];
 		double* y_dist = new double[N];
@@ -138,7 +138,7 @@ int main (int argc, char* argv[]) {
 	 	//loop through time steps
 	 	for(int t=0; t<n; ++t)
 	 	{
-	 		
+
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			//four corners
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -154,7 +154,7 @@ int main (int argc, char* argv[]) {
 
 			//i = 99 ; j = 99
 		  	a_write[N-1][N-1] = a_read[N-1][N-1] - ((((u * delta_t) / (2 * delta_dist))) * (((a_read[0][N-1] - a_read[N-2][N-1])) + ((a_read[N-1][0] - a_read[N-1][N-2]))));
-			
+
 
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			//first few cases
@@ -178,11 +178,20 @@ int main (int argc, char* argv[]) {
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 			double start = omp_get_wtime();
-	        
+
+#ifdef STATIC
+	        #pragma omp parallel for schedule(static) num_threads(thrd_cnt)
+#else
+#ifdef DYNAMIC
+	        #pragma omp parallel for schedule(dynamic) num_threads(thrd_cnt)
+#else
+#ifdef GUIDED
+	        #pragma omp parallel for schedule(guided) num_threads(thrd_cnt)
+#else
 	        #pragma omp parallel for num_threads(thrd_cnt)
-	       // #pragma omp parallel for schedule(static) num_threads(thrd_cnt)
-	       // #pragma omp parallel for schedule(dynamic) num_threads(thrd_cnt)
-	       // #pragma omp parallel for schedule(guided) num_threads(thrd_cnt)
+#endif
+#endif
+#endif
 
 			for(int i=1; i<(N-2); ++i)
 		  	{
@@ -197,7 +206,7 @@ int main (int argc, char* argv[]) {
 	       // cout << "Time taken is " << time_taken << " for time step " << t << endl;
 
 	        loop_time[t] = time_taken;
-	    
+
 
 			///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			//last few cases
@@ -244,10 +253,10 @@ int main (int argc, char* argv[]) {
 	    cout << sum << endl;
 
 	    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		//We're Done, Release the Memory 
+		//We're Done, Release the Memory
 		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-		for(int i = 0; i < N; ++i) 
+		for(int i = 0; i < N; ++i)
 		{
 	    	delete [] a_read[i];
 	    	delete [] a_write[i];
@@ -264,5 +273,3 @@ int main (int argc, char* argv[]) {
 	}
 
 }
-
-
