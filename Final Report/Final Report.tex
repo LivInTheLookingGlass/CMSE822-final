@@ -1,6 +1,7 @@
 \documentclass{article}
 \usepackage[utf8]{inputenc}
 \usepackage{graphicx}
+\usepackage{multirow}
 
 \usepackage{lipsum}
 \usepackage{listings}
@@ -131,6 +132,25 @@ for(int t=0; t<n; ++t)
 \end{lstlisting}
 
 
+
+\begin{center}
+\begin{tabular}{ |c|c|c|c|c|c| } 
+\hline
+ & Scaling & Schedule & N & n & t \\
+\hline
+\multirow{8}{4em}{2D Advection} & \multirow{4}{4em}{strong}& none & 32 - 2,048 & 10,00 & 1 - 8 \\ 
+& & static & 32 - 2,048 & 10,00 & 1 - 8 \\
+& & dynamic & 32 - 2,048 & 10,00 & 1 - 8 \\ 
+&  & guided & 32 - 2,048 & 10,00 & 1 - 8 \\ 
+\cline{2-2} % add this
+
+& \multirow{4}{4em}{weak}& cell3 & cell 4 & cell 5 & cell 6 \\ 
+& & cell6 & cell 7 & cell 8 & cell 9\\ 
+& & cell6 & cell 7 & cell 8 & cell 9\\ 
+&  & cell9 & cell 10 & cell 11& cell10 \\ 
+\hline
+\end{tabular}
+\end{center}
 
 For 2D Advection, 2D Inviscid Burgers, and 2D Viscous Burgers we wish to look at strong and weak scaling, while incorportationg cache blocking by loop scheduling. A detailed summary can be found in Table 
 
