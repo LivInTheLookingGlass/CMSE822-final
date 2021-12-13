@@ -2,6 +2,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage{graphicx}
 \usepackage{multirow}
+\usepackage{subcaption}
 
 \usepackage{lipsum}
 \usepackage{listings}
@@ -18,7 +19,6 @@
 
 \maketitle
 
-\section{Abstract}
 \section{Introduction}
 
 Modern astrophysical research has become increasingly dominated by large scale, multi-dimensional simulations.
@@ -30,24 +30,18 @@ One key feature that most of these astrophysical phenomena have in common is tha
 Equations such as Euler, Cauchy, or Navier–Stokes are often used for simulating astrophysical plasmas.
 These simulations often call for techniques such as adaptive mesh refinement (AMR) and high order finite difference or finite volume methods.
 
-For this research project, I will be investigating second and fourth order discretization of hyperbolic PDEs.
-In particular, I will look at the two dimensional form of the advection equation, viscous Burgers' equation, and inviscid Burgers' equation.
+For this research project, we will be investigating second and fourth order discretization of hyperbolic PDEs.
+In particular, we will look at the two dimensional form of the Advection Equation, Inviscid Burgers' Equation, and Viscous Burgers' Equation. We chose these equations because they are generally easier to solve than Euler, Cauchy, and Navier-Stokes. 
 This work will focus on these equations over a periodic domain on a uniform mesh grid using finite difference methods.
 
 The goal of this research project is to understand the underlying issues surrounding hyperbolic solvers for fluid equations.
 I will investigate various optimization techniques for a single node.
-My work will begin with parallelization using OpenMP 4.5 or 5.0. to target both CPUs and GPUs.
-After parallelisation, I will employ other techniques such as cache blocking to see the effects of strong and weak scaling.
-Once I believe I have achieved optimal performance using OpenMP, I will try to implement similar techniques using Kokkos.
+My work will begin with parallelization using \texttt{OpenMP} to target CPUs.
+After parallelisation, we will employ other techniques such as cache blocking and loop scheduling to see the effects of strong and weak scaling.
 
-Kokkos is an open source c++ performance portability programming model that has recently been coupled with Athena++ to create K-Athena.
-Athena++ is a magnetohydrodynamics CUP code that is based on MPI+OpenMP.
-K-Athena utilizes MPI for inter-node parallelism, hence my project here will focus solely on optimization for a single node.
-Likewise Kokkos is compatible with optimization techniques which target both CPUs and GPUs.
-K-Athena will become a key component to my own thesis, so this research project serves as a fantastic stepping stone to my future research studying astrophysical phenomena using AMR and finite volume methods.
 
 \section{Methodology}
-
+\subsection{Finite Difference Methods for Hyperbolic PDEs}
 For this research project, we look to solve and parallelize three PDEs. The first is the linear advection equation, which can be described as 
 
 \begin{equation}
@@ -64,15 +58,6 @@ To solve this PDE, we use a finite-difference discretization in which the domain
 
 
 
-
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=1.0\textwidth]{Finite_Difference_Grid.png}
-\caption{A simple finite-difference grid (courtesy of \cite{zingale_2020}). The solution is stored at each of the labeled points. The dotted lines show the ghost points used to extend our grid past the physical boundaries to accommodate boundary conditions. In our instance, we assume a periodic domain, so the points $0$ and $N-1$ are the same physical point in space.}
-\label{Finite_Difference_Grid}
-\end{figure}
-
 Let the index $i$ denote the point's location, and $a_i$ denote the discrete value of $a(x)$ at point $i$. Figure ~\ref{Finite_Difference_Grid} shows the grid. To discretize in time, we denote the time-level with a superscript $n$, such that $a_i^n = a(x_i, t_n)$. For a fixed $\Delta t$, a time level $n$ corresponds to a time of $t = n \Delta t$. A simple first-order accurate centered-difference discretization is then
 
 \begin{equation}
@@ -80,6 +65,14 @@ Let the index $i$ denote the point's location, and $a_i$ denote the discrete val
 \end{equation}
 
 This is a forward-time, centered-space explicit method, since the new solution, $a_i^{n+1}$, depends only on information at the old time level, $n$. When implemented into \texttt{C++}, we are iterating through time steps $n$ and displacement steps $i$ to solve for $a_i^{n+1} $
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=1.0\textwidth]{Images/Finite_Difference_Grid.png}
+\caption{A simple finite-difference grid \cite{zingale_2020}. The solution is stored at each of the labeled points. The dotted lines show the ghost points used to extend our grid past the physical boundaries to accommodate boundary conditions. In our instance, we assume a periodic domain, so the points $0$ and $N-1$ are the same physical point in space.}
+\label{Finite_Difference_Grid}
+\end{figure}
+
 
 The second equation we wish to investigate is Inviscid Burgers’ equation. This equation is a nonlinear hyperbolic equation, and given as:
 
@@ -105,36 +98,79 @@ Here $\nu$ is the viscosity. The centered-difference discretization for Viscous 
  \frac{a_i^{n+1} - a_i^n}{\Delta t} + a_i^n ( \frac{a_{i+1}^n - a_{i-1}^n}{2 \Delta x} ) = \nu (\frac{a_{i+1}^n - 2a_i^n - a_{i-1}^n}{{\Delta x}^2})
 \end{equation}
 
-For this research project we aim to parallelize and time the speed for our code to run through the bulk of our data (excluding the special boundary conditions to main periodicy). For example, the 1D Advection would appear as:
+
+
+
+\begin{figure}
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=1.0\linewidth]{Images/2D_Viscous_Burgers_Graph_0.png}
+  \caption{Time step 0}
+  \label{fig:sfig1}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=1.0\linewidth]{Images/2D_Viscous_Burgers_Graph_999.png}
+  \caption{Time step 1000}
+  \label{fig:sfig2}
+\end{subfigure}
+\caption{Visualization of 2D Viscous Burgers' Equation}
+\label{fig:fig}
+\end{figure}
+
+
+\subsection{Parallization Techniques}
+For this research project we aim to parallize our code using \texttt{OpenMP}. Our main interest is speeding up the major for loop in our code which iterates through the bulk of our spatial domain. The boundaries of our domain are not included in this for loop, for they have specific boundary conditions that must be met to maintain periodicity. For example, the major for loop of our 1D Advection code appear as follows:
 
 \begin{c++}
-double start = omp_get_wtime();
-
-#pragma omp parallel for num_threads(thrd_cnt)
-
 for(int t=0; t<n; ++t)
 {
-	for(int i=1; i<(N-2); ++i)
-   	{
-   		a_write[i] = a_read[i] - 
-   		(((u * delta_t) / (2 * delta_x)) 
-   		* (a_read[i+1] - a_read[i-1]));
-  	}
-
-	double end = omp_get_wtime();
-	double time_taken = end-start;
-	
-	loop_time[t] = time_taken;
+    double start = omp_get_wtime();
+    
+    #pragma omp parallel for num_threads(thrd_cnt)
+    	
+    for(int i=1; i<(N-2); ++i)
+    {
+        a_write[i] = a_read[i] - 
+        (((u * delta_t) / (2 * delta_x))*(a_read[i+1] - a_read[i-1]));
+    }
+    
+    double end = omp_get_wtime();
+    double time_taken = end-start;
+    	
+    loop_time[t] = time_taken;
 }	
 \end{c++}
 
+
+
+In addition to parallizing our code using \texttt{\#pragma omp parallel}, we are interested in seeing the effect on computation time if we use a loop scheduler. Loop schedulers are a helpful way to assign loop iterations to the number of threads available. The three types of loop schedulers we are interested in are Static, Dynamic, and Guided. 
+
+Static scheduler assigns one consecutive block of iterations to each thread. With static, the compiler determines the assignment of loop iterations to the threads at compile time. Static allows for a user specified chunk size for the size of blocks. If all iterations take roughly the same amount of time, static is the most efficient use of a loop scheduler.
+ 
+ Dynamic scheduler assigns blocks of iterations in a task queue, where threads will take one of these tasks whenever it finishes with its previous task. Similar to static, dynamic allows for a specified chunk size. Dynamic is most helpful when the iterations take different amounts of time to execute.
+ 
+ Lastly, guided scheduler gradually decreases the chunk size. It does so under the assumption that large chunks carry the least overhead, but smaller chunks are better for load balancing. The various schedules are illustrated in Figure ~\ref{Loop_Schedule}.
+ 
+
+ 
+\begin{figure}[h]
+\centering
+\includegraphics[width=1.0\textwidth]{Images/Loop_Schedule.png}
+\caption{Illustration of the scheduling strategies of static, dynamic, and guided loop schedulers \cite{eijkhout_2021}.}
+\label{Loop_Schedule}
+\end{figure}
+
+For this research project, we wish to look at parallization for 2D Advection, 2D Inviscid Burgers, and 2D Viscous Burgers. In particular, we wish to look at strong and weak scaling, while incorporating cache blocking by loop scheduling. A detailed summary can be found in Table ~\ref{Table_Timing_Summary}
 
 
 \begin{table}[h]
 \begin{center}
 \begin{tabular}{ |c|c|c|c|c|c| } 
 \hline
- & Scaling & Schedule & N & n & threads \\
+ & Type of  & Scheduler & Number of x,y & Number of & Number of \\
+ & Scaling  & Type & Steps (N) & Time Steps (n) &  Threads (t) \\
+
 \hline
 \multirow{8}{4em}{2D Advection} & \multirow{4}{4em}{strong}& none & 32 - 2,048 & 10,000 & 1 - 8 \\ 
 & & static & 32 - 2,048 & 10,000 & 1 - 8 \\
@@ -169,13 +205,43 @@ for(int t=0; t<n; ++t)
 \label{Table_Timing_Summary}
 \end{table}
 
-For 2D Advection, 2D Inviscid Burgers, and 2D Viscous Burgers we wish to look at strong and weak scaling, while incorporating cache blocking by loop scheduling. A detailed summary can be found in Table ~\ref{Table_Timing_Summary}
+
+
+
+\section{Results \& Discussion}
+
+\subsection{Cache Blocking}
+
+For the three loop schedulers, we looked at the effect of chunk size in relation to the time needed to run for N = 512, n = 10,000, threads = 8, and the chunk size varied between 1 through 100. The results are seen in Figure ~\ref{Chunk_Size}. Both Static and Dynamic scheduling have a minimum time around a chunk size of 32 and 64. This is likely due to HELP 
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=1.0\textwidth]{Images/Chunk Size vs Time.png}
+\caption{Chunk.}
+\label{Chunk_Size}
+\end{figure}
+
+\subsection{Loop Schedules}
 
 
 
 
-\section{Discussion}
-\section{Conclusion}
+\begin{figure}[p]
+\centering
+\subfloat[]{\includegraphics[width=12cm]{Images/2D_Advection_Strong_Scaling.png}}\\
+\vfill
+\subfloat[]{\includegraphics[width=12cm]{Images/2D_Advection_Weak_Scaling.png}}
+\caption{2D Advection} 
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\subfloat[]{\includegraphics[width=12cm]{Images/2D_Advection_Strong_N_2048.png}}\\
+\vfill
+\subfloat[]{\includegraphics[width=12cm]{Images/2D_Advection_Weak_N_2048.png}}
+\caption{2D Advection} 
+\end{figure}
+
 \section{Acknowledgments}
 
 C. W. would like to thank Dr. Andrew Christlieb for his invaluable knowledge on numerical solutions to PDEs.
