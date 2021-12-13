@@ -13,27 +13,29 @@ def cpu_count():
 
 def main(N_range, n_range, t_range, optimizations, repeats_for_average, filename, use_ratio):
     """Run through each set of options and compile/benchmark the test code."""
-    # first see if our CSV exists
-    try:
-        with open('results.csv', 'x') as f:  # open in exclusive mode, fails if already there
-            csv = writer(f)
-            # write the header row
-            csv.writerow(['Optimization', 'Mode (default, static, dynamic, guided)', 'N (# of x,y steps)', 'n (# of t steps)', '# of threads', '# of samples', 'total time','average time'])
-    except FileExistsError:
-        pass
 
     # for each level of optimization
     for opt in optimizations:
         # compile the program, stop if it errors
         modes = ["DEFAULT", "STATIC", "DYNAMIC", "GUIDED"]
         for mode in modes:
-            run(["g++", filename, f"-O{opt}", "-fopenmp"], check=True)
+            csv_name = f'results_{mode.lower()}_{"weak" if use_ratio else "strong"}.csv'
+            # first see if our CSV exists
+            try:
+                with open(csv_name, 'x') as f:  # open in exclusive mode, fails if already there
+                    csv = writer(f)
+                    # write the header row
+                    csv.writerow(['Optimization', 'N (# of x,y steps)', 'n (# of t steps)', '# of threads', '# of samples', 'total time','average time'])
+            except FileExistsError:
+                pass
+
+            run(["g++", filename, f"-O{opt}", "-fopenmp", "-D" + mode], check=True)
             for N, n in product(N_range, n_range):
                 if use_ratio:
                     n = round(N / 32 * 1000)
                 for threads in t_range:
                     # print what we're working on
-                    print(f"opt={opt}, N={N}, n={n}, threads={threads}", end="")
+                    print(f"opt={opt}, mode={mode}, N={N}, n={n}, threads={threads}", end="")
                     # Python tends to buffer until a newline, so we tell it not to
                     stdout.flush()
                     # please make sure the format is correct here
@@ -49,12 +51,12 @@ def main(N_range, n_range, t_range, optimizations, repeats_for_average, filename
                         # fetch the output of our program and split by whitespace
                         time_total += float(output[0])  # grab the time it took from the first word
                     # print the data
-                    print(f"\tTotal Time={time_total}", end="")
+                    print(f"\tTotal Time={time_total:.06f}", end="")
                     print(f"\tAverage Time={time_total / samples:.06f}")
                     # then throw it in a CSV
-                    with open('results.csv', 'a') as f:
+                    with open(csv_name, 'a') as f:
                         csv = writer(f)
-                        csv.writerow([opt, mode, N, n, threads, samples, time_total, time_total / samples])
+                        csv.writerow([opt, N, n, threads, samples, time_total, time_total / samples])
 
 
 if __name__ == '__main__':
@@ -73,7 +75,7 @@ if __name__ == '__main__':
     # the number of times to repeat a test for average value
     parser.add_argument('-r', action='store', type=int, default=5, dest='repeats')
     # the number of times to repeat a test for average value
-    parser.add_argument('-u', action='store_true', type=bool, default=False, dest='use_ratio')
+    parser.add_argument('-u', action='store_true', default=False, dest='use_ratio')
     # the file to use
     parser.add_argument('-f', action='store', type=str, default="2D_Viscous_Burgers_Arr_Parallel.cpp", dest='filename')
 
