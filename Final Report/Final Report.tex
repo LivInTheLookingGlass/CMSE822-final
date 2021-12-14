@@ -13,7 +13,7 @@
 \title{CMSE 822 Final Project }
 \author{Carolyn Wendeln $\&$ Gabe Appleton}
 
-\date{\today}
+\date{December 13, 2021}
 
 \begin{document}
 
@@ -21,138 +21,123 @@
 
 \section{Introduction}
 
-Modern astrophysical research has become increasingly dominated by large scale, multi-dimensional simulations.
-Phenomena such as supernovae core collapse, coronal mass ejections, or neutron star mergers all rely on multi-scale simulations.
-These simulations can span orders of magnitude in scale separation, yet these vast scales are required to resolve the key underlying physics involved.
-Although these large scale simulations have become a necessity, they often require an ever-increasing amount of computational resources.
+Modern  astrophysical  research  has  become  increasingly  dominated  by  large-scale, multi-dimensional simulations. Phenomena such as supernovae core collapse, coronal mass ejections, or neutron star mergers all rely on such multi-scale simulations. A common theme throughout the hardest of these simulations is the tight coupling of the different underlying physical phenomena involved over broad scales in both length and time. Although these multi-scale simulations have become a necessity to increasing our knowledge, they often require an ever-increasing amount of computational resources.
 
-One key feature that most of these astrophysical phenomena have in common is that they are often coupled to hyperbolic partial differential equations (PDEs).
-Equations such as Euler, Cauchy, or Navier–Stokes are often used for simulating astrophysical plasmas.
-These simulations often call for techniques such as adaptive mesh refinement (AMR) and high order finite difference or finite volume methods.
+One key feature that most of these astrophysical phenomena have in common is that they are often coupled to nonlinear hyperbolic partial differential equations (PDEs).
+Equations such as Euler, Cauchy, or Navier–Stokes are often used for simulating astrophysical plasmas. The Simulation of these equations often calls for techniques such as adaptive mesh refinement (AMR), high order finite difference, or high order finite volume methods.
 
-For this research project, we will be investigating second and fourth order discretization of hyperbolic PDEs.
-In particular, we will look at the two dimensional form of the Advection Equation, Inviscid Burgers' Equation, and Viscous Burgers' Equation. We chose these equations because they are generally easier to solve than Euler, Cauchy, and Navier-Stokes. 
-This work will focus on these equations over a periodic domain on a uniform mesh grid using finite difference methods.
+For this research project, we will be investigating second and fourth order discretization of hyperbolic PDEs. In particular, we will look at the two dimensional form of the Advection Equation, Inviscid Burgers' Equation, and Viscous Burgers' Equation. We chose these equations because they are generally easier to solve compared to Euler, Cauchy, and Navier-Stokes. 
+This work will focus on these three equations over a periodic domain on a uniform mesh grid using finite difference methods.
 
-The goal of this research project is to understand the underlying issues surrounding hyperbolic solvers for fluid equations.
-I will investigate various optimization techniques for a single node.
-My work will begin with parallelization using \texttt{OpenMP} to target CPUs.
-After parallelisation, we will employ other techniques such as cache blocking and loop scheduling to see the effects of strong and weak scaling.
+The goal of this research project is to understand the underlying issues surrounding hyperbolic solvers for fluid equations. We will investigate various optimization techniques for a single node. Our work will begin with parallelization using \texttt{OpenMP} to target CPUs. After parallelisation, we will employ other techniques such as cache blocking and loop scheduling to see the effects of strong and weak scaling.
 
 
 \section{Methodology}
 \subsection{Finite Difference Methods for Hyperbolic PDEs}
-For this research project, we look to solve and parallelize three PDEs. The first is the linear advection equation, which can be described as 
+For this research project, we look to solve and parallelize three PDEs commonly used for simulating fluid dynamics. The first is the linear Advection Equation. This equation can be described as follows: 
 
 \begin{equation}
  \frac{\partial a}{\partial t} + u \frac{\partial a}{\partial x} = 0
 \end{equation}
 
-where $a(x,t)$ is a scalar quantity and $u$ is the velocity at which it is advected. For our research project, we chose to make $a(x,t)$ a Gaussian function of the form 
+where $a(x,t)$ is a scalar quantity for a fluid and $u$ is the velocity at which it is advected. For our research project, we chose to make $a(x,t)$ a Gaussian function of the form: 
 
 \begin{equation}
 a(x,t) = a_0(t) e^{- 50 (x - 0.5)^2 }
 \end{equation}
 
-To solve this PDE, we use a finite-difference discretization in which the domain is divided into a sequence of points where we store the solution. We then solve this PDE numerically by discretizing the solution at these points.
+To solve this PDE, we use a finite-difference discretization. For this method, the spatial domain is divided into a sequence of points where the solution of $a(x,t)$ is stored. The PDE is then solved numerically by discretizing the solution at these points. Figure \ref{Finite_Difference_Grid} shows a representation of the discretized grid.
+Let the index $i$ denote the point's location, and $a_i$ denote the discrete value of $a(x)$ at point $i$. To discretize in time, we denote the time-level with a superscript $n$, such that $a_i^n = a(x_i, t_n)$. For a fixed $\Delta t$, a time level $n$ corresponds to a time of $t = n \Delta t$. A first-order accurate discretization centered around the point $i$ is then given as:
 
 
+\begin{figure}[b]
+\centering
+\includegraphics[width=1.0\textwidth]{Images/Finite_Difference_Grid.png}
+\caption{A simple finite-difference grid \cite{zingale_2020}. The solution is stored at each of the labeled points. The dotted lines show the ghost points used to extend our grid past the physical boundaries to accommodate boundary conditions. In this instance, we assume a periodic domain, so the points $0$ and $N-1$ are the same physical point in space.}
+\label{Finite_Difference_Grid}
+\end{figure}
 
-Let the index $i$ denote the point's location, and $a_i$ denote the discrete value of $a(x)$ at point $i$. Figure ~\ref{Finite_Difference_Grid} shows the grid. To discretize in time, we denote the time-level with a superscript $n$, such that $a_i^n = a(x_i, t_n)$. For a fixed $\Delta t$, a time level $n$ corresponds to a time of $t = n \Delta t$. A simple first-order accurate centered-difference discretization is then
 
 \begin{equation}
  \frac{a_i^{n+1} - a_i^n}{\Delta t} + u \frac{a_{i+1}^n - a_{i-1}^n}{2 \Delta x}  = 0
 \end{equation}
 
-This is a forward-time, centered-space explicit method, since the new solution, $a_i^{n+1}$, depends only on information at the old time level, $n$. When implemented into \texttt{C++}, we are iterating through time steps $n$ and displacement steps $i$ to solve for $a_i^{n+1} $
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=1.0\textwidth]{Images/Finite_Difference_Grid.png}
-\caption{A simple finite-difference grid \cite{zingale_2020}. The solution is stored at each of the labeled points. The dotted lines show the ghost points used to extend our grid past the physical boundaries to accommodate boundary conditions. In our instance, we assume a periodic domain, so the points $0$ and $N-1$ are the same physical point in space.}
-\label{Finite_Difference_Grid}
-\end{figure}
+This is a forward-time, centered-space explicit method, since the new solution, $a_i^{n+1}$, depends only on information at the old time level $n$. When implemented into \texttt{C++}, we are iterating through time steps $n$ and displacement steps $i$ (i.e., $a_i^n$) to solve for $a_i^{n+1}$.
 
 
-The second equation we wish to investigate is Inviscid Burgers’ equation. This equation is a nonlinear hyperbolic equation, and given as:
+
+
+The second equation we wish to investigate is the Inviscid Burgers’ Equation. This equation is a nonlinear hyperbolic equation, and is given as:
 
 \begin{equation}
  \frac{\partial a}{\partial t} + a \frac{\partial a}{\partial x} = 0
 \end{equation}
 
-Here $a(x,t)$ is both the quantity being advected and the speed at which it is moving. The centered-difference discretization for Inviscid Burgers' equation is then
+Here $a(x,t)$ is both the quantity being advected and the speed at which it is moving. The centered-difference discretization for the Inviscid Burgers' Equation is then:
 
 \begin{equation}
  \frac{a_i^{n+1} - a_i^n}{\Delta t} +  a_i^n ( \frac{a_{i+1}^n - a_{i-1}^n}{2 \Delta x} ) = 0
 \end{equation}
 
-The third and final equation we wish to investigate is Viscous Burgers' equation
+The third and final equation we wish to investigate is the Viscous Burgers' Equation. This equation is written as such:
 
 \begin{equation}
  \frac{\partial a}{\partial t} + a \frac{\partial a}{\partial x} = \nu \frac{\partial ^2 a}{\partial x^2} 
 \end{equation}
 
-Here $\nu$ is the viscosity. The centered-difference discretization for Viscous Burgers' equation is then
+Here $\nu$ is the viscosity. The centered-difference discretization for the Viscous Burgers' Equation is then:
 
 \begin{equation}
  \frac{a_i^{n+1} - a_i^n}{\Delta t} + a_i^n ( \frac{a_{i+1}^n - a_{i-1}^n}{2 \Delta x} ) = \nu (\frac{a_{i+1}^n - 2a_i^n - a_{i-1}^n}{{\Delta x}^2})
 \end{equation}
 
 
+ A visual representation of the Viscous Burgers Equation can be seen in Figure \ref{2D_Vis_Burg_Vis}. For this visualization, our x and y domain is between the values of 0 and 1 on a $512 \times 512$ grid. The centered-difference discretization for the Viscous Burgers' Equation was used to solve up to $t$ = 0.3 seconds for $n = 1,000$ time steps. A time of $t = 0.3$ was chosen to prevent the formation of a shock. 
 
-
-\begin{figure}
+\begin{figure}[h]
 \begin{subfigure}{.5\textwidth}
   \centering
   \includegraphics[width=1.0\linewidth]{Images/2D_Viscous_Burgers_Graph_0.png}
-  \caption{Time step 0}
+  \caption{Time step $n$ = 0}
   \label{fig:sfig1}
 \end{subfigure}%
 \begin{subfigure}{.5\textwidth}
   \centering
   \includegraphics[width=1.0\linewidth]{Images/2D_Viscous_Burgers_Graph_999.png}
-  \caption{Time step 1000}
+  \caption{Time step $n$ = 1000}
   \label{fig:sfig2}
 \end{subfigure}
-\caption{Visualization of 2D Viscous Burgers' Equation}
-\label{fig:fig}
+\caption{Visualization of the 2D Viscous Burgers' Equation}
+\label{2D_Vis_Burg_Vis}
 \end{figure}
 
 
 \subsection{Parallization Techniques}
-For this research project we aim to parallize our code using \texttt{OpenMP}. Our main interest is speeding up the major for loop in our code which iterates through the bulk of our spatial domain. The boundaries of our domain are not included in this for loop, for they have specific boundary conditions that must be met to maintain periodicity. For example, the major for loop of our 1D Advection code appear as follows:
+For this research project we aim to parallize our code using \texttt{OpenMP}. Our main interest is speeding up the major loop which iterates through the bulk of our spatial domain. The boundaries of our domain are not included in this loop, as they have specific boundary conditions that must be met to maintain periodicity. As an example, the major loop of our 1D Advection code is as follows:
 
 \begin{c++}
-for(int t=0; t<n; ++t)
-{
+for(int t=0; t<n; ++t)  {
     double start = omp_get_wtime();
-    
+
     #pragma omp parallel for num_threads(thrd_cnt)
-    	
-    for(int i=1; i<(N-2); ++i)
-    {
+    for(int i=1; i<(N-2); ++i)  {
         a_write[i] = a_read[i] - 
         (((u * delta_t) / (2 * delta_x))*(a_read[i+1] - a_read[i-1]));
     }
-    
-    double end = omp_get_wtime();
-    double time_taken = end-start;
     	
-    loop_time[t] = time_taken;
+    loop_time[t] = omp_get_wtime() - start;
 }	
 \end{c++}
 
 
 
-In addition to parallizing our code using \texttt{\#pragma omp parallel}, we are interested in seeing the effect on computation time if we use a loop scheduler. Loop schedulers are a helpful way to assign loop iterations to the number of threads available. The three types of loop schedulers we are interested in are Static, Dynamic, and Guided. 
+In addition to parallelizing our code using \texttt{\#pragma omp parallel}, we are interested in seeing the effect on computation time if we use a loop scheduler. Loop schedulers are a helpful way to assign loop iterations to the number of threads available. The three types of loop schedulers we are interested in for this study are static, dynamic, and guided. 
 
-Static scheduler assigns one consecutive block of iterations to each thread. With static, the compiler determines the assignment of loop iterations to the threads at compile time. Static allows for a user specified chunk size for the size of blocks. If all iterations take roughly the same amount of time, static is the most efficient use of a loop scheduler.
+The static scheduler assigns a consecutive block of iterations to each thread. If a run has $t$ threads, each thread will be assigned $\tfrac{1}{t}$ of the iterations. Static allows for a user specified chunk size for the size of blocks. If all iterations take roughly the same amount of time, static may be the most efficient loop scheduler.
  
- Dynamic scheduler assigns blocks of iterations in a task queue, where threads will take one of these tasks whenever it finishes with its previous task. Similar to static, dynamic allows for a specified chunk size. Dynamic is most helpful when the iterations take different amounts of time to execute.
+ The dynamic scheduler assigns blocks of iterations via a task queue, where threads will take a chunk of these tasks whenever it finishes with its previous tasks. Similar to static, dynamic allows for a specified chunk size. Dynamic is most helpful when iterations will take a variable amount of time to execute.
  
- Lastly, guided scheduler gradually decreases the chunk size. It does so under the assumption that large chunks carry the least overhead, but smaller chunks are better for load balancing. The various schedules are illustrated in Figure ~\ref{Loop_Schedule}.
- 
-
+ Lastly, the guided scheduler gradually decreases the chunk size. It does so under the assumption that large chunks carry the least overhead, but smaller chunks are better for load balancing. The various schedules are illustrated in Figure \ref{Loop_Schedule}.
  
 \begin{figure}[h]
 \centering
@@ -161,47 +146,47 @@ Static scheduler assigns one consecutive block of iterations to each thread. Wit
 \label{Loop_Schedule}
 \end{figure}
 
-For this research project, we wish to look at parallization for 2D Advection, 2D Inviscid Burgers, and 2D Viscous Burgers. In particular, we wish to look at strong and weak scaling, while incorporating cache blocking by loop scheduling. A detailed summary can be found in Table ~\ref{Table_Timing_Summary}
+For this research project, we wish to look at parallelization of the 2D Advection Equation, 2D Inviscid Burgers' Equation, and 2D Viscous Burgers' Equation. In particular, we wish to look at strong and weak scaling, while incorporating cache blocking and loop scheduling. A detailed summary of our work can be found in Table \ref{Table_Timing_Summary}.
 
 
-\begin{table}[h]
+\begin{table}[t]
 \begin{center}
 \begin{tabular}{ |c|c|c|c|c|c| } 
 \hline
  & Type of  & Scheduler & Number of x,y & Number of & Number of \\
- & Scaling  & Type & Steps (N) & Time Steps (n) &  Threads (t) \\
+ & Scaling  & Type & Steps ($N$) & Time Steps ($n$) &  Threads ($thrd\_cnt$) \\
 
 \hline
 \multirow{8}{4em}{2D Advection} & \multirow{4}{4em}{strong}& none & 32 - 2,048 & 10,000 & 1 - 8 \\ 
 & & static & 32 - 2,048 & 10,000 & 1 - 8 \\
 & & dynamic & 32 - 2,048 & 10,000 & 1 - 8 \\ 
 &  & guided & 32 - 2,048 & 10,000 & 1 - 8 \\ 
-& \multirow{4}{4em}{weak}& none & 32 - 2,048 & 1000N $\div$ 32 & 1 - 8 \\ 
-& & static & 32 - 2,048 & 1000N $\div$ 32 & 1 - 8 \\
-& & dynamic & 32 - 2,048 & 1000N $\div$ 32 & 1 - 8 \\ 
-&  & guided & 32 - 2,048 & 1000N $\div$ 32 & 1 - 8 \\ 
+& \multirow{4}{4em}{weak}& none & 32 - 2,048 & 1000$N$ $\div$ 32 & 1 - 8 \\ 
+& & static & 32 - 2,048 & 1000$N$ $\div$ 32 & 1 - 8 \\
+& & dynamic & 32 - 2,048 & 1000$N$ $\div$ 32 & 1 - 8 \\ 
+&  & guided & 32 - 2,048 & 1000$N$ $\div$ 32 & 1 - 8 \\ 
 \hline
 \multirow{8}{4em}{2D Burgers} & \multirow{4}{4em}{strong}& none & 32 - 2,048 & 10,000 & 1 - 8 \\ 
 & & static & 32 - 2,048 & 10,000 & 1 - 8 \\
 & & dynamic & 32 - 2,048 & 10,000 & 1 - 8 \\ 
 &  & guided & 32 - 2,048 & 10,000 & 1 - 8 \\ 
-& \multirow{4}{4em}{weak}& none & 32 - 2,048 & 1000N $\div$ 32 & 1 - 8 \\ 
-& & static & 32 - 2,048 & 1000N $\div$ 32 & 1 - 8 \\
-& & dynamic & 32 - 2,048 & 1000N $\div$ 32 & 1 - 8 \\ 
-&  & guided & 32 - 2,048 & 1000N $\div$ 32 & 1 - 8 \\ 
+& \multirow{4}{4em}{weak}& none & 32 - 2,048 & 1000$N$ $\div$ 32 & 1 - 8 \\ 
+& & static & 32 - 2,048 & 1000$N$ $\div$ 32 & 1 - 8 \\
+& & dynamic & 32 - 2,048 & 1000$N$ $\div$ 32 & 1 - 8 \\ 
+&  & guided & 32 - 2,048 & 1000$N$ $\div$ 32 & 1 - 8 \\ 
 \hline
 \multirow{8}{4em}{2D Viscous Burgers} & \multirow{4}{4em}{strong}& none & 32 - 2,048 & 10,000 & 1 - 8 \\ 
 & & static & 32 - 2,048 & 10,000 & 1 - 8 \\
 & & dynamic & 32 - 2,048 & 10,000 & 1 - 8 \\ 
 &  & guided & 32 - 2,048 & 10,000 & 1 - 8 \\ 
-& \multirow{4}{4em}{weak}& none & 32 - 2,048 & 1000N $\div$ 32 & 1 - 8 \\ 
-& & static & 32 - 2,048 & 1000N $\div$ 32 & 1 - 8 \\
-& & dynamic & 32 - 2,048 & 1000N $\div$ 32 & 1 - 8 \\ 
-&  & guided & 32 - 2,048 & 1000N $\div$ 32 & 1 - 8 \\ 
+& \multirow{4}{4em}{weak}& none & 32 - 2,048 & 1000$N$ $\div$ 32 & 1 - 8 \\ 
+& & static & 32 - 2,048 & 1000$N$ $\div$ 32 & 1 - 8 \\
+& & dynamic & 32 - 2,048 & 1000$N$ $\div$ 32 & 1 - 8 \\ 
+&  & guided & 32 - 2,048 & 1000$N$ $\div$ 32 & 1 - 8 \\ 
 \hline
 \end{tabular}
 \end{center}
-\caption{Summary of tasks to run. Note that N is only run for powers of 2.}
+\caption{Summary of tasks to run. Note that $N$ is only run for powers of 2.}
 \label{Table_Timing_Summary}
 \end{table}
 
@@ -212,39 +197,109 @@ For this research project, we wish to look at parallization for 2D Advection, 2D
 
 \subsection{Cache Blocking}
 
-For the three loop schedulers, we looked at the effect of chunk size in relation to the time needed to run for N = 512, n = 10,000, threads = 8, and the chunk size varied between 1 through 100. The results are seen in Figure ~\ref{Chunk_Size}. Both Static and Dynamic scheduling have a minimum time around a chunk size of 32 and 64. This is likely due to HELP 
+For the dynamic and static loop schedulers, we looked at the effect of chunk size on the time needed to run for the following setup: $N = 512$, $n = 10,000$, $thrd\_cnt = 8$, and the chunk size varied from a value of 1 up to a value of 100. The results are seen in Figure \ref{Chunk_Size}. Both static and dynamic scheduling have minimum times around a chunk size of 32 and 64. We believe the pattern displayed follows the formula
+
+\begin{equation}
+\ceil{\dfrac{N=512}{chunk\; size}} \div thrd\_cnt
+\end{equation}
+
+With a thread count of 8, this formula gives us integer values at local minima of 22, 32, and 64.This would follow a pattern such that at these minima every thread gets the same number of chunks, therefore all threads run at the same wall clock time. For other chunk sizes, some threads will carry more workload, some will carry less, thus producing uneven wall clock times and increasing overall computation time. 
+
+
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=1.0\textwidth]{Images/Chunk Size vs Time.png}
-\caption{Chunk.}
+\caption{The effect of chunk size on computation time for schedule static and schedule dynamic.}
 \label{Chunk_Size}
 \end{figure}
 
-\subsection{Loop Schedules}
+\subsection{Loop Scheduling}
 
+To investigate the effects that loop schedulers have on computation time, we looked at the effects of strong and weak scaling for a varying number of displacement steps, time steps, and thread count. For strong scaling, the time step was held constant at $n = 10,000$, while the thread count increased from $thrd\_cnt = 1$ through $thrd\_cnt = 8$, and the displacement steps increased by powers of 2 from $N = 32$ through $N = 2048$.
 
+For weak scaling, the thread count increased from $thrd\_cnt$ = 1 through $thrd\_cnt = 8$, the displacement steps increased by powers of 2 from $N = 32$ through $N = 2048$, and the time step increased proportionally to $N$ by a factor of $1000/32$ for values of $n = 1000$ up to a value of $n = 64,000$. The results for all of these runs for 2D Advection, Inviscid Burgers, and Viscous Burgers can be found in Figures \ref{2D_Advection_Strong_Weak}, \ref{2D_Inviscid_Burgers_Strong_Weak}, and \ref{2D_Viscous_Burgers_Strong_Weak}.
 
+Generally there is a trend that when you increase the number of threads, computation time decreases. Likewise, as the displacement mesh increases, the computation time increases. This trend is seen for both strong and weak scaling. However there are a few notable exceptions that we will outline below.
+
+The first of these is that when the workload distributed to each thread is relatively small, the benefit of increasing thread count is overwhelmed by overhead. You can see this clearly in Figure ~\ref{2D_Advection_Strong_Weak}, especially in the runs without a scheduler and in the case of strong scaling, static advection. It is also fairly clear that this effect diminishes as the grid size increases, to the point where it is negligible in many runs, such as the guided runs.
+
+The second major exception is found in the 2D weak scaling advection run in Figure \ref{2D_Advection_Strong_Weak}, specifically the one with no scheduler. The case of grid size $N =32$ appears to make sense to us. A major spike occurs when making the first thread, likely due to overhead in thread creation and memory management. This then decreases as you add threads up until 6, where it starts to reverse as threads are unable to find enough work to justify their creation. This, however, does not explain $N \in \{64, 128\}$ very well. Part of this is likely due to an interfering factor, as each doubling of $N$ will cause an eight-fold increase in workload (double the width, double the length, double the time steps). To some extent this is an open question. A similar trend can be seen in the Inviscid Burgers weak scaling run with a static scheduler (Figure \ref{2D_Inviscid_Burgers_Strong_Weak}).
+
+\begin{figure}[p]
+\vspace{-25mm}
+\centering
+\captionsetup[subfigure]{labelformat=empty}
+\subfloat[]{\includegraphics[width=14cm]{Images/2D_Advection_Strong_Scaling.png}}\\
+\vfill
+\subfloat[]{\includegraphics[width=14cm]{Images/2D_Advection_Weak_Scaling.png}}
+\caption{Strong and weak scaling for the 2D Advection Equation} 
+\label{2D_Advection_Strong_Weak}
+\end{figure}
+
+\begin{figure}[p]
+\vspace{-25mm}
+\centering
+\captionsetup[subfigure]{labelformat=empty}
+\subfloat[]{\includegraphics[width=14cm]{Images/2D_Inviscid_Burgers_Strong_Scaling.png}}\\
+\vfill
+\subfloat[]{\includegraphics[width=14cm]{Images/2D_Inviscid_Burgers_Weak_Scaling.png}}
+\caption{Strong and weak scaling for the 2D Inviscid Burgers' Equation} 
+\label{2D_Inviscid_Burgers_Strong_Weak}
+\end{figure}
+
+\begin{figure}[p]
+\vspace{-25mm}
+\centering
+\captionsetup[subfigure]{labelformat=empty}
+\subfloat[]{\includegraphics[width=14cm]{Images/2D_Viscous_Burgers_Strong_Scaling.png}}\\
+\vfill
+\subfloat[]{\includegraphics[width=14cm]{Images/2D_Viscous_Burgers_Weak_Scaling.png}}
+\caption{Strong and weak scaling for the 2D Viscous Burgers' Equation} 
+\label{2D_Viscous_Burgers_Strong_Weak}
+\end{figure}
+
+Figures \ref{2D_Advection_2048}, \ref{2D_Inviscid_Burgers_2048}, and \ref{2D_Viscous_Burgers_2048} show a detailed comparison of strong and weak scaling for various loop schedulers. These comparisons correspond to the $N = 2,048$ cases shown previously for the 2D Advection, Inviscid Burgers', and Viscous Burgers' Equations.
+
+For the 2D Advection Equation shown in Figure \ref{2D_Advection_2048}, run time is minimized with no scheduler with $\sim$6-7 threads. The static scheduler works better for strong scaling, but only slightly, whereas no scheduler performs faster for weak scaling.
+
+For the 2D Inviscid and Viscous Burgers' Equations shown in Figures \ref{2D_Inviscid_Burgers_2048} and \ref{2D_Viscous_Burgers_2048}, no scheduler is clearly best for the case of weak scaling. There is also little-to-no variation between the other schedulers in terms of strong scaling. For all four cases, there is a general trend of increasing the thread count decreasing the computation time. 
+
+The overarching question of this research project is ``How can I make my code run faster?'' To that, we answer, more threads, no scheduler.
 
 \begin{figure}[p]
 \centering
-\subfloat[]{\includegraphics[width=12cm]{Images/2D_Advection_Strong_Scaling.png}}\\
+\captionsetup[subfigure]{labelformat=empty}
+\subfloat[]{\includegraphics[width=12cm]{Images/2D_Advection_Strong_N_2048.png}}\\
 \vfill
-\subfloat[]{\includegraphics[width=12cm]{Images/2D_Advection_Weak_Scaling.png}}
-\caption{2D Advection} 
+\subfloat[]{\includegraphics[width=12cm]{Images/2D_Advection_Weak_N_2048.png}}
+\caption{2D Advection Equation} 
+\label{2D_Advection_2048}
 \end{figure}
 
 \begin{figure}[p]
 \centering
-\subfloat[]{\includegraphics[width=12cm]{Images/2D_Advection_Strong_N_2048.png}}\\
+\captionsetup[subfigure]{labelformat=empty}
+\subfloat[]{\includegraphics[width=12cm]{Images/2D_Inviscid_Burgers_Strong_N_2048.png}}\\
 \vfill
-\subfloat[]{\includegraphics[width=12cm]{Images/2D_Advection_Weak_N_2048.png}}
-\caption{2D Advection} 
+\subfloat[]{\includegraphics[width=12cm]{Images/2D_Inviscid_Burgers_Weak_N_2048.png}}
+\caption{2D Inviscid Burgers' Equation} 
+\label{2D_Inviscid_Burgers_2048}
+\end{figure}
+
+\begin{figure}[p]
+\centering
+\captionsetup[subfigure]{labelformat=empty}
+\subfloat[]{\includegraphics[width=12cm]{Images/2D_Viscous_Burgers_Strong_N_2048.png}}\\
+\vfill
+\subfloat[]{\includegraphics[width=12cm]{Images/2D_Viscous_Burgers_Weak_N_2048.png}}
+\caption{2D Viscous Burgers' Equation} 
+\label{2D_Viscous_Burgers_2048}
 \end{figure}
 
 \section{Acknowledgments}
 
-C. W. would like to thank Dr. Andrew Christlieb for his invaluable knowledge on numerical solutions to PDEs.
+C. W. would like to thank Dr. Andrew Christlieb for his invaluable knowledge on numerical solutions to hyperbolic PDEs. C. W. and G. A. would both like to thank Dr. Bill Punch for teaching us how to run our code faster.
 
 
 
